@@ -4,7 +4,6 @@ from PIL import Image
 import zipfile
 import io
 import pytesseract  # Using pytesseract instead of easyocr
-import pytesseract
 
 # Only if PATH is not detected automatically
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
