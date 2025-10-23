@@ -3,10 +3,10 @@ import os
 from PIL import Image
 import zipfile
 import io
-import pytesseract  # Using pytesseract instead of easyocr
+import pytesseract
 
-# Only if PATH is not detected automatically
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+# Remove Windows-specific path for Render deployment
+# pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
@@ -108,5 +108,8 @@ def resize_image():
 def index():
     return render_template('index.html')
 
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    # For Render, set host='0.0.0.0' and port from environment
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
