@@ -194,12 +194,12 @@
         <!-- Image Resizer -->
         <div class="card">
             <h2>📏 Image Resizer</h2>
-            <form action="/resize_image" method="POST" enctype="multipart/form-data">
-                <input type="file" name="image" accept="image/*" required><br>
-                <input type="number" name="width" placeholder="New Width (px)" required>
-                <input type="number" name="height" placeholder="New Height (px)" required><br>
-                <button type="submit">Resize & Download</button>
-            </form>
+        <form action="/resize" method="POST" enctype="multipart/form-data">
+            <input type="file" name="image" required>
+            <input type="number" name="width" placeholder="Width" required>
+            <input type="number" name="height" placeholder="Height" required>
+            <button type="submit">Resize & Download</button>
+</form>
         </div>
 
     </div>
