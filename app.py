@@ -3,9 +3,11 @@ import os
 from PIL import Image
 import zipfile
 import io
-import easyocr
-import numpy as np
-from collections import Counter
+import pytesseract  # Using pytesseract instead of easyocr
+import pytesseract
+
+# Only if PATH is not detected automatically
+pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
@@ -35,8 +37,7 @@ def split_image():
                     top = r * tile_height
                     right = (c + 1) * tile_width
                     bottom = (r + 1) * tile_height
-                    box = (left, top, right, bottom)
-                    tile = img.crop(box)
+                    tile = img.crop((left, top, right, bottom))
                     img_bytes = io.BytesIO()
                     tile.save(img_bytes, format='PNG')
                     img_bytes.seek(0)
@@ -48,23 +49,18 @@ def split_image():
         flash(f"Error splitting image: {e}")
         return redirect(url_for('index'))
 
-
 # ========== OPTION 2: IMAGE TO TEXT (OCR) ==========
 @app.route('/extract_text', methods=['POST'])
 def extract_text():
     try:
         file = request.files['image']
-        reader = easyocr.Reader(['en'])
-        result = reader.readtext(np.array(Image.open(file)))
-
-        extracted_text = "\n".join([res[1] for res in result])
+        img = Image.open(file)
+        extracted_text = pytesseract.image_to_string(img)
         return render_template('index.html', extracted_text=extracted_text)
     except Exception as e:
         flash(f"Error extracting text: {e}")
         return redirect(url_for('index'))
 
-
-# ========== OPTION 3: COLOR PALETTE EXTRACTOR ==========
 # ========== OPTION 3: COLOR PALETTE EXTRACTOR ==========
 @app.route('/extract_palette', methods=['POST'])
 def extract_palette():
@@ -74,20 +70,20 @@ def extract_palette():
 
         img = Image.open(file).convert('RGB')
         img = img.resize((150, 150))
-        pixels = np.array(img).reshape(-1, 3)
+        pixels = list(img.getdata())
 
-        # Count most common colors
-        counter = Counter(map(tuple, pixels))
-        most_common = counter.most_common(num_colors)
+        color_count = {}
+        for pixel in pixels:
+            color_count[pixel] = color_count.get(pixel, 0) + 1
 
-        # Convert np.uint8 values to normal integers for clean display
-        colors = [f"rgb({int(r)}, {int(g)}, {int(b)})" for (r, g, b), _ in most_common]
+        sorted_colors = sorted(color_count.items(), key=lambda x: x[1], reverse=True)
+        most_common = sorted_colors[:num_colors]
+        colors = [f"rgb({r},{g},{b})" for (r, g, b), _ in most_common]
 
         return render_template('index.html', colors=colors)
     except Exception as e:
         flash(f"Error extracting color palette: {e}")
         return redirect(url_for('index'))
-
 
 # ========== OPTION 4: IMAGE RESIZER ==========
 @app.route('/resize_image', methods=['POST'])
@@ -108,12 +104,10 @@ def resize_image():
         flash(f"Error resizing image: {e}")
         return redirect(url_for('index'))
 
-
 # ========== HOME ROUTE ==========
 @app.route('/')
 def index():
     return render_template('index.html')
-
 
 if __name__ == '__main__':
     app.run(debug=True)
